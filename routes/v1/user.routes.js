@@ -75,6 +75,24 @@ router.put('/:id', (req, res) => {
     res.status(200).json(users[index]);     // 7
   });
 
+  // PATCH /users/:id
+router.patch('/:id', (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  const index = users.findIndex(u => u.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Usuario no encontrado' });
+  }
+
+  users[index] = {
+    ...users[index],
+    ...updates
+  };
+
+  res.status(200).json(users[index]);
+});
+
   // DELETE /users/:id
 router.delete('/:id', (req, res) => {
     const { id } = req.params;                            // 1
@@ -85,7 +103,7 @@ router.delete('/:id', (req, res) => {
     }
   
     const deletedUser = users.splice(index, 1);           // 4
-    res.status(200).json({ deleted: deletedUser[0].id }); // 5
+    res.status(204).send(); // 5
   });
 
   // GET /users?role=user&search=Carlos

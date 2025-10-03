@@ -1,9 +1,9 @@
 const express = require("express"); // Import express
 const app = express(); // Create an instance of express
-const { port } = require('./config/env'); // Import the port from the env file
+const { port } = require('../config/env'); // Import the port from the env file
 
 //importar rutas
-const routes = require("./routes");
+const routes = require("../routes");
 
 //midelware para parsear json
 app.use(express.json());
