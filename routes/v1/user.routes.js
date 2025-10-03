@@ -32,6 +32,16 @@ router.get('/:id', (req, res) => {
 
    // POST /users
 router.post('/', (req, res) => {
+    // Validación de cabeceras de autorización
+    const authorization = req.get('Authorization');
+    const apiKey = req.get('X-API-Key');
+    const contentType = req.get('Content-Type');
+    
+    // Validar que el contenido sea JSON
+    if (contentType && !contentType.includes('application/json')) {
+      return res.status(415).json({ error: 'Content-Type debe ser application/json' });
+    }
+
     const { name, email, role } = req.body;   // 1
   
     if (!name || !email) {   // 2
@@ -47,6 +57,10 @@ router.post('/', (req, res) => {
     };
   
     users.push(newUser);   // 4
+
+    // Configurar cabeceras de respuesta
+    res.set('Location', `/api/v1/users/${newUser.id}`);
+    res.set('X-Created-At', newUser.createdAt);
   
     res.status(201).json(newUser);   // 5
   });
@@ -108,6 +122,11 @@ router.delete('/:id', (req, res) => {
 
   // GET /users?role=user&search=Carlos
 router.get('/', (req, res) => {
+    // Leer cabeceras HTTP
+    const contentType = req.get('Content-Type');
+    const apiKey = req.get('X-API-Key');
+    const userAgent = req.get('User-Agent');
+    
     const { role, search } = req.query;  // 1
     let result = users;                  // 2
   
@@ -120,8 +139,35 @@ router.get('/', (req, res) => {
         u.name.toLowerCase().includes(search.toLowerCase())
       );
     }
+
+    // Configurar cabeceras de respuesta adicionales
+    res.set('X-Total-Count', result.length);
+    res.set('Cache-Control', 'no-cache');
   
-    res.status(200).json(result);        // 5
+    res.status(200).json({
+      data: result,
+      meta: {
+        total: result.length,
+        contentType: contentType,
+        timestamp: new Date().toISOString()
+      }
+    });        // 5
   });
   
+// Middleware de manejo de errores con estado 500
+router.use((error, req, res, next) => {
+    console.error('Error interno del servidor:', error);
+    
+    // Configurar cabeceras de error
+    res.set('X-Error-Type', 'InternalServerError');
+    res.set('X-Timestamp', new Date().toISOString());
+    
+    res.status(500).json({
+        error: 'Error interno del servidor',
+        message: 'Ha ocurrido un error inesperado',
+        timestamp: new Date().toISOString(),
+        status: 500
+    });
+});
+
 module.exports = router;
